@@ -2,6 +2,14 @@ const { application } = require('express');
 const express = require('express');
 const PORT = process.env.PORT || 3001;
 const app = express();
+const fs = require('fs');
+const path = require('path');
+
+// Middleware functions
+// Parse incoming string or array data. urlencoded allows incoming POST data to be converted to key/value pairings
+app.use(express.urlencoded({ extended: true }));
+// Parse incoming JSON data 
+app.use(express.json());
 
 const { animals } = require('./data/animals');
 
@@ -41,7 +49,34 @@ function findById(id, animalsArray) {
     return result;
 }
 
-//routes
+function createNewAnimal(body, animalsArray) {
+    const animal = body;
+    animalsArray.push(animal);
+    fs.writeFileSync(
+        path.join(__dirname, './data/animals.json'),
+        JSON.stringify({ animals: animalsArray }, null, 2)
+    );
+    // return finished code to post route for response
+    return animal;
+}
+
+function validateAnimal(animal) {
+    if (!animal.name || typeof animal.name !== 'string') {
+        return false;
+    }
+    if (!animal.species || typeof animal.species !== 'string') {
+        return false;
+    }
+    if (!animal.diet || typeof animal.diet !== 'string') {
+        return false;
+    }
+    if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)){
+        return false;
+    }
+    return true
+}
+
+// Routes
 app.get('/api/animals', (req, res) => {
     let results = animals;
     if (req.query) {
@@ -56,6 +91,20 @@ app.get('/api/animals/:id', (req, res) => {
         res.json(result);
     } else {
         res.send(404);
+    }
+});
+
+app.post('/api/animals', (req, res) => {
+    //req.body is where our incoming content will be
+    req.body.id = animals.length.toString()
+    //if any data in req.body is incorret, send 400 error back
+    if (!validateAnimal(req.body)) {
+        res.status(400).send('The animal is not properly formatted.');
+    } else {
+        // Add animal to JSON file and animals array in this function
+        const animal = createNewAnimal(req.body, animals);
+        //send back the data to the client
+        res.json(animal);
     }
 });
 
