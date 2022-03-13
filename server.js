@@ -10,6 +10,8 @@ const path = require('path');
 app.use(express.urlencoded({ extended: true }));
 // Parse incoming JSON data 
 app.use(express.json());
+// Middleware that allows access to the front end code
+app.use(express.static('public'));
 
 const { animals } = require('./data/animals');
 
@@ -106,6 +108,22 @@ app.post('/api/animals', (req, res) => {
         //send back the data to the client
         res.json(animal);
     }
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/assets/index.html'));
+});
+
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/assets/animals.html'));
+});
+
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/assets/zookeepers.html'));
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/assets/index.html'));
 });
 
 app.listen(PORT, () => {
